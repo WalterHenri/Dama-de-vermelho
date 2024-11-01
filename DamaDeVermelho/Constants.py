@@ -1,0 +1,3 @@
+HEIGHT = 768
+WIDTH = 1024
+FPS = 60
