@@ -1,6 +1,6 @@
 import pygame
 from Movimento import *
-
+from Constants import *
 
 class Damas:
     def __init__(self):
@@ -8,7 +8,7 @@ class Damas:
         self.inicializar_tabuleiro()
         pygame.init()
         pygame.display.set_caption('Dama de Vermelho')
-        self.screen = pygame.display.set_mode((800, 800))
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.selecionada = None
         self.movimentos = None
         self.turno = 0
@@ -58,28 +58,28 @@ class Damas:
         for i in range(8):
             for j in range(8):
                 if cont % 2 == 0 and i % 2 == 0 or cont % 2 != 0 and i % 2 != 0:
-                    pygame.draw.rect(self.screen, (255, 255, 255), (j * 100, i * 100, 100, 100))
+                    pygame.draw.rect(self.screen, (255, 255, 255), (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
                 else:
-                    pygame.draw.rect(self.screen, (0, 0, 0), (j * 100, i * 100, 100, 100))
+                    pygame.draw.rect(self.screen, (0, 0, 0), (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (j * 100 + 50, i * 100 + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 0, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
                 elif self.board[i][j] == PECA_PRETA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (j * 100 + 50, i * 100 + 50), 40)
+                    pygame.draw.circle(self.screen, (0, 0, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
                 elif self.board[i][j] == PECA_BRANCA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (255, 255, 0), (j * 100 + 50, i * 100 + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
                 elif self.board[i][j] == PECA_PRETA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (0, 255, 255), (j * 100 + 50, i * 100 + 50), 40)
+                    pygame.draw.circle(self.screen, (0, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
 
                 if self.board[i][j] == PECA_BRANCA_DAMA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (j * 100 + 50, i * 100 + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (j * 100 + 50, i * 100 + 50), 30)
+                    pygame.draw.circle(self.screen, (255, 0, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 30)
                 elif self.board[i][j] == PECA_PRETA_DAMA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (j * 100 + 50, i * 100 + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (j * 100 + 50, i * 100 + 50), 30)
+                    pygame.draw.circle(self.screen, (0, 0, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 30)
 
                 if self.board[i][j] == CASA_MOVIMENTO:
-                    pygame.draw.circle(self.screen, (0, 255, 0), (j * 100 + 50, i * 100 + 50), 12)
+                    pygame.draw.circle(self.screen, (0, 255, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 12)
                 cont += 1
 
     def run(self):
@@ -103,13 +103,13 @@ class Damas:
                 text = font.render(f'Vencedor: {self.vencedor}', True, (255, 255, 255))
                 self.screen.blit(text, (200, 300))
             pygame.display.flip()
-            clock.tick(60)
+            clock.tick(FPS)
         pygame.quit()
         quit()
 
     def selecionar_peca(self, x, y):
-        i = y // 100
-        j = x // 100
+        i = y // TAMANHO_CASA
+        j = x // TAMANHO_CASA
 
         if self.turno % 2 == 0:
             if color(self.board[i][j]) == PECA_PRETA:
