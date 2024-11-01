@@ -1,5 +1,4 @@
 import pygame
-from Casas import *
 from Movimento import *
 
 
@@ -12,6 +11,10 @@ class Damas:
         self.screen = pygame.display.set_mode((800, 800))
         self.selecionada = None
         self.movimentos = None
+        self.turno = 0
+        self.vencedor = None
+        self.jogador1 = 'Branco'
+        self.jogador2 = 'Preto'
 
     def inicializar_tabuleiro(self):
         self.board[0][0] = PECA_PRETA
@@ -93,7 +96,12 @@ class Damas:
                     self.selecionar_peca(x, y)
 
             self.screen.fill((0, 0, 0))
+
             self.desenhar_tabuleiro()
+            if self.vencedor is not None:
+                font = pygame.font.Font(None, 74)
+                text = font.render(f'Vencedor: {self.vencedor}', True, (255, 255, 255))
+                self.screen.blit(text, (200, 300))
             pygame.display.flip()
             clock.tick(60)
         pygame.quit()
@@ -103,11 +111,37 @@ class Damas:
         i = y // 100
         j = x // 100
 
+        if self.turno % 2 == 0:
+            if color(self.board[i][j]) == PECA_PRETA:
+                return
+        else:
+            if color(self.board[i][j]) == PECA_BRANCA:
+                return
+        print(f'Peça selecionada: {i} {j}')
+
+        if self.board[i][j] == CASA_VAZIA:
+            self.desmarcar_selecionada()
+            return
+
         if self.board[i][j] == CASA_MOVIMENTO:
+            self.print_tabuleiro()
             self.mover_peca(i, j)
+            self.turno += 1
+            cont_branca = self.num_pecas(PECA_BRANCA)
+            if cont_branca == 0:
+                self.vencedor = self.jogador2
+                print(f'Vencedor: {self.vencedor}')
+                return
+
+            cont_preta = self.num_pecas(PECA_PRETA)
+            if cont_preta == 0:
+                self.vencedor = self.jogador1
+                print(f'Vencedor: {self.vencedor}')
+                return
             return
 
         self.desmarcar_selecionada()
+        self.print_tabuleiro()
         self.marcar_selecionada(i, j)
 
     def mover_peca(self, i, j):
@@ -124,8 +158,9 @@ class Damas:
         if movimento is not None:
             if movimento.tipo_movimento == MOVIMENTO_COMER:
                 self.board[movimento.peca_comida_i][movimento.peca_comida_j] = CASA_VAZIA
-            else:
-                self.board[selecionada_i][selecionada_j] = CASA_VAZIA
+
+            self.board[selecionada_i][selecionada_j] = CASA_VAZIA
+
         self.tornar_dama(i, j)
         self.desmarcar_selecionada()
 
@@ -162,14 +197,31 @@ class Damas:
         elif self.board[i][j] == PECA_PRETA:
             self.board[i][j] = PECA_PRETA_SELECIONADA
         self.selecionada = (i, j)
-        movimentos = Movimento.calcular_movimentos_possiveis(self.board, i, j)
-        self.movimentos = movimentos
-        if movimentos is None:
+        movimentos = Movimento.calcular_movimentos_possiveis(self.board, self.board[i][j])
+        if movimentos is None or len(movimentos) == 0:
+            self.vencedor = self.jogador2 if self.turno % 2 == 0 else self.jogador1
+            print(f'Vencedor: {self.vencedor}')
+            return
+
+        self.movimentos = []
+        for movimento in movimentos:
+            if movimento.i == i and movimento.j == j:
+                self.movimentos.append(movimento)
+
+        if len(self.movimentos) == 0:
             print('Nenhum movimento possível')
             return
 
-        for movimento in movimentos:
+        for movimento in self.movimentos:
             i_aux = movimento.i_final
             j_aux = movimento.j_final
             print(f'Movimento: {i} {j} -> {i_aux} {j_aux}')
             self.board[i_aux][j_aux] = CASA_MOVIMENTO
+
+    def num_pecas(self, cor):
+        cont = 0
+        for i in range(8):
+            for j in range(8):
+                if color(self.board[i][j]) == color(cor):
+                    cont += 1
+        return cont
