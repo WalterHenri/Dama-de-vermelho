@@ -12,5 +12,18 @@ MOVIMENTO_NORMAL = 1
 MOVIMENTO_COMER = 2
 
 
+def eh_branca(peca):
+    return peca == PECA_BRANCA or peca == PECA_BRANCA_SELECIONADA or peca == PECA_BRANCA_DAMA or peca == PECA_BRANCA_DAMA_SELECIONADA
 
 
+def eh_preta(peca):
+    return peca == PECA_PRETA or peca == PECA_PRETA_SELECIONADA or peca == PECA_PRETA_DAMA or peca == PECA_PRETA_DAMA_SELECIONADA
+
+
+def color(peca):
+    if eh_branca(peca):
+        return PECA_BRANCA
+    elif eh_preta(peca):
+        return PECA_PRETA
+    else:
+        return CASA_VAZIA
