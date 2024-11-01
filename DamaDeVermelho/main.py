@@ -1,5 +1,5 @@
-import Damas
+import Game
 
 if __name__ == '__main__':
-    damas = Damas.Damas()
-    damas.run()
+    game = Game.Game()
+    game.run()
