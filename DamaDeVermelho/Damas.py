@@ -2,18 +2,21 @@ import pygame
 import os
 from datetime import timedelta
 from Bot import Bot
+from Config import Config
 from GameStyle import GameStyle
 from Movimento import *
 from Constants import *
 from DrawTools import *
-
+from ResultadoModal import ResultadoModal
 
 class Damas:
     def __init__(self, mode=TWO_PLAYER, nome_bot=""):
+        self.running = False
+        self.tabuleiroCarregado = False
         self.tempoInicial = None
         self.tempoTotal = timedelta(seconds=0)
         self.board = [[0 for _ in range(8)] for _ in range(8)]
-        self.inicializar_tabuleiro()
+        self.inicializarJogo()
         pygame.init()
         pygame.display.set_caption('Dama de Vermelho')
         self.background = pygame.image.load('Assets/background.jpg')
@@ -29,18 +32,36 @@ class Damas:
         self.jogador2 = 'Preto'
         self.mode = mode
         self.bot = Bot()
+        self.config = Config.load_config()
+
         if self.mode == ONE_PLAYER:
             self.bot.set_name(nome_bot)
             self.bot.set_style(GameStyle.load_style(nome_bot + ".json"))
             self.bot.load_learning(nome_bot + "_data.txt")
+            sprite = pygame.image.load('Assets/Pecas/' + nome_bot + '.png')
+        else:
+            # pega o ultimo caractere da string
+            skin = int(self.config.skin[-1]) % 8 + 1
+            sprite = pygame.image.load('Assets/Pecas/Player' + str(skin) + '.png')
+
+        sprite = pygame.transform.scale(sprite, (TAMANHO_CASA * 2, TAMANHO_CASA))
+        self.sprite_pretas = sprite.subsurface((0, 0, TAMANHO_CASA, TAMANHO_CASA))
+        self.sprite_dama_pretas = sprite.subsurface((TAMANHO_CASA, 0, TAMANHO_CASA, TAMANHO_CASA))
+
+        sprite = pygame.image.load('Assets/Pecas/' + self.config.skin + '.png')
+        sprite = pygame.transform.scale(sprite, (TAMANHO_CASA * 2, TAMANHO_CASA))
+        self.sprite_brancas = sprite.subsurface((0, 0, TAMANHO_CASA, TAMANHO_CASA))
+        self.sprite_dama_brancas = sprite.subsurface((TAMANHO_CASA, 0, TAMANHO_CASA, TAMANHO_CASA))
+
+    def inicializarJogo(self):
+        try:
+            self.carregar_jogo()
+        except FileNotFoundError:
+            self.inicializar_tabuleiro()
 
     def inicializar_tabuleiro(self):
-        try:
-            with open('tabuleiroSalvo.txt', 'r') as f:
-                self.board = [[int(cell.strip()) for cell in line.split()]
-                              for line in f]
-        except FileNotFoundError:
-            print("Iniciando um novo jogo")
+        if not self.tabuleiroCarregado:
+            self.board = [[CASA_VAZIA for _ in range(8)] for _ in range(8)]
             self.board[0][0] = PECA_PRETA
             self.board[0][2] = PECA_PRETA
             self.board[0][4] = PECA_PRETA
@@ -77,12 +98,52 @@ class Damas:
                 print(self.board[i][j], end=' ')
             print()
 
-    def salvar_tabuleiro(self):
-        with open('tabuleiroSalvo.txt', 'w') as arquivo:
+    def salvar_jogo(self, turno, tempocorrido, tabuleiro, nome_arquivo="jogo_salvo.txt"):
+        with open(nome_arquivo, "w") as arquivo:
+            # Salvando turno
+            arquivo.write("#turno\n")
+            arquivo.write(f"{turno}\n\n")
+
+            # Salvando tempo corrido
+            arquivo.write("#tempocorrido\n")
+            arquivo.write(f"{tempocorrido}\n\n")
+
+            # Salvando tabuleiro
+            arquivo.write("#tabuleiro\n")
             for i in range(8):
                 for j in range(8):
                     arquivo.write(str(self.board[i][j]) + ' ')
                 arquivo.write('\n')
+
+    def carregar_jogo(self, nome_arquivo="jogo_salvo.txt"):
+        with open(nome_arquivo, "r") as arquivo:
+            linhas = arquivo.readlines()
+
+        turnoP = None
+        tempoCorridoSalvo = None
+
+        # Processar linhas do arquivo
+        i = 0
+        while i < len(linhas):
+            linha = linhas[i].strip()
+
+            if linha == "#turno":
+                i += 1
+                turnoP = int(linhas[i].strip())
+
+            elif linha == "#tempocorrido":
+                i += 1
+                tempoCorridoSalvo = int(linhas[i].strip())
+
+            elif linha == "#tabuleiro":
+                i += 1
+                self.board = [[int(cell.strip()) for cell in line.split()]
+                              for line in arquivo]
+
+            i += 1
+        self.turno = turnoP
+        self.tempocorrido = tempoCorridoSalvo
+        self.tabuleiroCarregado = True
 
     def desenhar_tabuleiro(self):
         x = SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA
@@ -98,25 +159,30 @@ class Damas:
                                      (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
-                                       40)
+                    self.screen.blit(self.sprite_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
-                                       40)
+                    self.screen.blit(self.sprite_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_BRANCA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (255, 255, 0),
-                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (0, 255, 255),
-                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA_DAMA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
+                    self.screen.blit(self.sprite_dama_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA_DAMA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
-
+                    self.screen.blit(self.sprite_dama_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
+                elif self.board[i][j] == PECA_BRANCA_DAMA_SELECIONADA:
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_dama_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
+                elif self.board[i][j] == PECA_PRETA_DAMA_SELECIONADA:
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_dama_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 if self.board[i][j] == CASA_MOVIMENTO:
                     pygame.draw.circle(self.screen, (0, 255, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 12)
                 cont += 1
@@ -157,9 +223,8 @@ class Damas:
 
     def run(self):
         clock = pygame.time.Clock()
-        running = True
-
-        while running:
+        self.running = True
+        while self.running:
 
             if self.vencedor is None and self.turno % 2 == 1 and self.mode == ONE_PLAYER:
                 self.bot_move()
@@ -169,13 +234,13 @@ class Damas:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if voltarButton.collidepoint(event.pos):
-                        self.salvar_tabuleiro()
+                        self.salvar_jogo(self.turno, self.tempoTotal, self.board, 'tabuleiroSalvo.txt')
                         running = False
                     elif empateButton.collidepoint(event.pos):
                         pass
                     elif desistirButton.collidepoint(event.pos):
                         self.deletar_arquivo_tabuleiro()
-                        running = False
+                        self.running = False
                     else:
                         x, y = pygame.mouse.get_pos()
                         self.selecionar_peca(x, y)
@@ -240,15 +305,25 @@ class Damas:
             self.turno += 1
             cont_branca = self.num_pecas(PECA_BRANCA)
             if cont_branca == 0:
-                self.vencedor = self.jogador2
-                print(f'Vencedor: {self.vencedor}')
-                return
+                resultadoModal = ResultadoModal(self.screen, False)
+                resposta = resultadoModal.run()
+                if resposta == "menu":
+                    self.running = False
+                    return
+                elif resposta == "rematch":
+                    self.rematch()
+                    return
 
             cont_preta = self.num_pecas(PECA_PRETA)
             if cont_preta == 0:
-                self.vencedor = self.jogador1
-                print(f'Vencedor: {self.vencedor}')
-                return
+                resultadoModal = ResultadoModal(self.screen, True)
+                resposta = resultadoModal.run()
+                if resposta == "menu":
+                    self.running = False
+                    return
+                elif resposta == "rematch":
+                    self.rematch()
+                    return
             return
 
         self.desmarcar_selecionada()
@@ -374,6 +449,16 @@ class Damas:
             reward += self.bot.style.perder_dama
 
         return reward
+
+    def rematch(self):
+        self.tabuleiroCarregado = False
+        self.inicializar_tabuleiro()
+        self.turno = 0
+        self.vencedor = None
+        self.tempoInicial = None
+        self.tempoTotal = timedelta(seconds=0)
+        self.desmarcar_selecionada()
+        self.run()
 
 
 

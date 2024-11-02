@@ -1,4 +1,5 @@
 import MenuAdversarios
+from Config import ConfigScreen
 from Constants import *
 import pygame
 
@@ -13,6 +14,11 @@ def play_action():
 def bots_action():
     menu = MenuAdversarios.MenuAdversarios()
     menu.run()
+
+
+def settings_action():
+    config_screen = ConfigScreen()
+    config_screen.run()
 
 
 class Game:
@@ -37,7 +43,7 @@ class Game:
         }
         self.button_actions = {
             'play': play_action,
-            'settings': self.settings_action,
+            'settings': settings_action,
             'bots': bots_action,
             'exit': self.exit_action
         }
@@ -69,9 +75,6 @@ class Game:
         for key, rect in self.buttons.items():
             if rect.collidepoint(pos):
                 self.button_actions[key]()
-
-    def settings_action(self):
-        pass
 
     def exit_action(self):
         self.running = False

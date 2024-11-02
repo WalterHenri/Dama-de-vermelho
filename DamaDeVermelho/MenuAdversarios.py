@@ -16,21 +16,15 @@ class MenuAdversarios:
         pygame.display.set_caption('Dama de Vermelho')
 
         self.adversarios = [
-            {"nome": "Alcides", "dificuldade": 5,
-             "Descricao": "Gosta de andar de skate e tocar teclado, mas tenha cuidado, sua grande habilidade em "
-                          "aprendizado por reforco o tornara um adversario duro de enfrentar",
+            {"nome": "Alcides", "dificuldade": 5, "Descricao": "Gosta de andar de skate e tocar teclado, mas tenha cuidado, sua grande habilidade em aprendizado por reforco o tornara um adversario duro de enfrentar",
              "pathFoto": 'Assets/alcides.jpg'},
-            {"nome": "Raphael", "dificuldade": 3, "Descricao": "Amigavel e divertido, esse guitarriista provavelmente "
-                                                               "vai dar um show no tabuleiro",
+            {"nome": "Raphael", "dificuldade": 3, "Descricao": "Amigavel e divertido, esse guitarriista provavelmente vai dar um show no tabuleiro",
              "pathFoto": 'Assets/raphael.jpg'},
             {"nome": "Methanias", "dificuldade": 5,
-             "Descricao": "Amante das palavras e das mulheres, esse doutor, poetista e hedonista fara de tudo para "
-                          "colocar o maximo de damas possiveis em seu tabuleiro ",
+             "Descricao": "Amante das palavras e das mulheres, esse doutor, poetista e hedonista fara de tudo para colocar o maximo de damas possiveis em seu tabuleiro ",
              "pathFoto": 'Assets/methanias.jpeg'},
             {"nome": "Joseval", "dificuldade": 4,
-             "Descricao": "DOUTOR Joseval, como gosta de ser chamado nao perdera para um simples mortal, "
-                          "suas capacidades defensivas vao alem da sua propria vontade de ganhar tornando apenas uma "
-                          "vontade de nao perder",
+             "Descricao": "DOUTOR Joseval, como gosta de ser chamado nao perdera para um simples mortal, suas capacidades defensivas vao alem da sua propria vontade de ganhar tornando apenas uma vontade de nao perder",
              "pathFoto": 'Assets/joseval.jpg'},
         ]
         self.adversarioSelecionado = 0
@@ -64,7 +58,7 @@ class MenuAdversarios:
             desenharTexto(self.adversarios[self.adversarioSelecionado]["nome"], fonteGrande, corBranca, self.screen,
                           areaDescricao.x, areaDescricao.y + 10, 450, 40)
             desenharTexto(self.adversarios[self.adversarioSelecionado]["Descricao"], fontePequena, corBranca,
-                          self.screen, areaDescricao.x + 10, areaDescricao.y + 350)
+                          self.screen, areaDescricao.x + 10, areaDescricao.y + 350, largura=400, larguraMaxima=400)
 
             imagemOriginal = pygame.image.load(self.adversarios[self.adversarioSelecionado]["pathFoto"])
             larguraImagem, alturaImagem = 250, 250
