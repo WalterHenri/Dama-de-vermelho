@@ -2,6 +2,7 @@ import pygame
 from Movimento import *
 from Constants import *
 
+
 class Damas:
     def __init__(self):
         self.board = [[0 for _ in range(8)] for _ in range(8)]
@@ -58,9 +59,11 @@ class Damas:
         for i in range(8):
             for j in range(8):
                 if cont % 2 == 0 and i % 2 == 0 or cont % 2 != 0 and i % 2 != 0:
-                    pygame.draw.rect(self.screen, (255, 255, 255), (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    pygame.draw.rect(self.screen, (255, 255, 255),
+                                     (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
                 else:
-                    pygame.draw.rect(self.screen, (0, 0, 0), (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    pygame.draw.rect(self.screen, (0, 0, 0),
+                                     (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA:
                     pygame.draw.circle(self.screen, (255, 0, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
@@ -110,6 +113,8 @@ class Damas:
     def selecionar_peca(self, x, y):
         i = y // TAMANHO_CASA
         j = x // TAMANHO_CASA
+        if i < 0 or i >= 8 or j < 0 or j >= 8:
+            return
 
         if self.turno % 2 == 0:
             if color(self.board[i][j]) == PECA_PRETA:

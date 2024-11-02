@@ -1,6 +1,13 @@
 from Constants import *
 import pygame
 
+from Damas import Damas
+
+
+def play_action():
+    game = Damas()
+    game.run()
+
 
 class Game:
     def __init__(self):
@@ -23,7 +30,7 @@ class Game:
             'exit': pygame.Rect(SCREEN_WIDTH // 1.5, 410, 200, 50)
         }
         self.button_actions = {
-            'play': self.play_action,
+            'play': play_action,
             'settings': self.settings_action,
             'bots': self.bots_action,
             'exit': self.exit_action
@@ -56,9 +63,6 @@ class Game:
         for key, rect in self.buttons.items():
             if rect.collidepoint(pos):
                 self.button_actions[key]()
-
-    def play_action(self):
-        pass
 
     def settings_action(self):
         pass
