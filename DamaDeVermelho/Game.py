@@ -1,3 +1,4 @@
+import MenuAdversarios
 from Constants import *
 import pygame
 
@@ -9,6 +10,11 @@ def play_action():
     game.run()
 
 
+def bots_action():
+    menu = MenuAdversarios.MenuAdversarios()
+    menu.run()
+
+
 class Game:
     def __init__(self):
         pygame.init()
@@ -18,7 +24,7 @@ class Game:
         self.dark_overlay.set_alpha(100)
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
-        self.title = 'Dama de Vermelho'
+        self.title = 'Damas de Vermelho'
         pygame.display.set_caption(self.title)
         self.fonte_titulo = pygame.font.Font('Fonts/Nightcore Demo.ttf', 80)
         self.fonte_menu = pygame.font.Font('Fonts/The Wild Breath of Zelda.otf', 30)
@@ -32,7 +38,7 @@ class Game:
         self.button_actions = {
             'play': play_action,
             'settings': self.settings_action,
-            'bots': self.bots_action,
+            'bots': bots_action,
             'exit': self.exit_action
         }
         self.running = True
@@ -65,9 +71,6 @@ class Game:
                 self.button_actions[key]()
 
     def settings_action(self):
-        pass
-
-    def bots_action(self):
         pass
 
     def exit_action(self):

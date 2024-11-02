@@ -1,10 +1,12 @@
 import pygame
+
+from Bot import Bot
 from Movimento import *
 from Constants import *
 
 
 class Damas:
-    def __init__(self):
+    def __init__(self, mode=TWO_PLAYER):
         self.board = [[0 for _ in range(8)] for _ in range(8)]
         self.inicializar_tabuleiro()
         pygame.init()
@@ -16,6 +18,8 @@ class Damas:
         self.vencedor = None
         self.jogador1 = 'Branco'
         self.jogador2 = 'Preto'
+        self.mode = mode
+        self.bot = Bot()
 
     def inicializar_tabuleiro(self):
         self.board[0][0] = PECA_PRETA
@@ -55,35 +59,77 @@ class Damas:
             print()
 
     def desenhar_tabuleiro(self):
+        x = SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA
+        y = SCREEN_HEIGHT // 2 - 4 * TAMANHO_CASA
         cont = 0
         for i in range(8):
             for j in range(8):
                 if cont % 2 == 0 and i % 2 == 0 or cont % 2 != 0 and i % 2 != 0:
                     pygame.draw.rect(self.screen, (255, 255, 255),
-                                     (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
                 else:
                     pygame.draw.rect(self.screen, (0, 0, 0),
-                                     (j * TAMANHO_CASA, i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
+                                       40)
                 elif self.board[i][j] == PECA_PRETA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
+                                       40)
                 elif self.board[i][j] == PECA_BRANCA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (255, 255, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 0),
+                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
                 elif self.board[i][j] == PECA_PRETA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (0, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (0, 255, 255),
+                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
 
                 if self.board[i][j] == PECA_BRANCA_DAMA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 30)
+                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
                 elif self.board[i][j] == PECA_PRETA_DAMA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 30)
+                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
 
                 if self.board[i][j] == CASA_MOVIMENTO:
-                    pygame.draw.circle(self.screen, (0, 255, 0), (j * TAMANHO_CASA + 50, i * TAMANHO_CASA + 50), 12)
+                    pygame.draw.circle(self.screen, (0, 255, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 12)
                 cont += 1
+
+    def board_to_state(self):
+        return tuple(tuple(row) for row in self.board)
+
+    def get_all_possible_moves_for_bot(self):
+        possible_moves = []
+
+        for i in range(8):
+            for j in range(8):
+                if self.board[i][j] in [PECA_PRETA, PECA_PRETA_DAMA]:  # Considera somente peças do bot
+                    moves = Movimento.calcular_movimentos_possiveis(self.board, self.board[i][j])
+
+                    for move in moves:
+                        # Verifica se o movimento inicia na posição atual
+                        if move.i == i and move.j == j:
+                            possible_moves.append(move)
+
+        return possible_moves
+
+    def bot_move(self):
+        state = self.board_to_state()
+        actions = self.get_all_possible_moves_for_bot()
+        action = self.bot.choose_action(state, actions)
+        self.apply_move(action)  # Update board based on the chosen action
+
+        # After move, get new state and calculate reward
+        next_state = self.board_to_state()
+        reward = self.calculate_reward()  # Define a reward function based on win, loss, or piece capture
+        next_actions = self.get_all_possible_moves_for_bot()
+        self.bot.update_q_value(state, action, reward, next_state, next_actions)
+
+    def save_bot_learning(self):
+        self.bot.save_learning()
+
+    def load_bot_learning(self):
+        self.bot.load_learning()
 
     def run(self):
 
@@ -111,8 +157,10 @@ class Damas:
         quit()
 
     def selecionar_peca(self, x, y):
-        i = y // TAMANHO_CASA
-        j = x // TAMANHO_CASA
+
+        i = (y - (SCREEN_HEIGHT // 2 - 4 * TAMANHO_CASA)) // TAMANHO_CASA
+        j = (x - (SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA)) // TAMANHO_CASA
+
         if i < 0 or i >= 8 or j < 0 or j >= 8:
             return
 
@@ -230,3 +278,9 @@ class Damas:
                 if color(self.board[i][j]) == color(cor):
                     cont += 1
         return cont
+
+    def apply_move(self, action):
+        pass
+
+    def calculate_reward(self):
+        pass
