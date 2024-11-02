@@ -40,7 +40,6 @@ class Damas:
             self.bot.load_learning(nome_bot + "_data.txt")
             sprite = pygame.image.load('Assets/Pecas/' + nome_bot + '.png')
         else:
-            # pega o ultimo caractere da string
             skin = int(self.config.skin[-1]) % 8 + 1
             sprite = pygame.image.load('Assets/Pecas/Player' + str(skin) + '.png')
 
