@@ -29,10 +29,23 @@ class Damas:
         self.jogador2 = 'Preto'
         self.mode = mode
         self.bot = Bot()
+
         if self.mode == ONE_PLAYER:
             self.bot.set_name(nome_bot)
             self.bot.set_style(GameStyle.load_style(nome_bot + ".json"))
             self.bot.load_learning(nome_bot + "_data.txt")
+            sprite = pygame.image.load('Assets/Pecas/' + nome_bot + '.png')
+        else:
+            sprite = pygame.image.load('Assets/Pecas/Player1.png')
+        #faca um recorte na sprite
+        sprite = pygame.transform.scale(sprite, (TAMANHO_CASA * 2, TAMANHO_CASA))
+        self.sprite_pretas = sprite.subsurface((0, 0, TAMANHO_CASA, TAMANHO_CASA))
+        self.sprite_dama_pretas = sprite.subsurface((TAMANHO_CASA, 0, TAMANHO_CASA, TAMANHO_CASA))
+
+        sprite = pygame.image.load('Assets/Pecas/Player2.png')
+        sprite = pygame.transform.scale(sprite, (TAMANHO_CASA * 2, TAMANHO_CASA))
+        self.sprite_brancas = sprite.subsurface((0, 0, TAMANHO_CASA, TAMANHO_CASA))
+        self.sprite_dama_brancas = sprite.subsurface((TAMANHO_CASA, 0, TAMANHO_CASA, TAMANHO_CASA))
 
     def inicializar_tabuleiro(self):
         try:
@@ -98,25 +111,30 @@ class Damas:
                                      (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
-                                       40)
+                    self.screen.blit(self.sprite_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50),
-                                       40)
+                    self.screen.blit(self.sprite_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_BRANCA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (255, 255, 0),
-                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA_SELECIONADA:
-                    pygame.draw.circle(self.screen, (0, 255, 255),
-                                       (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
 
                 if self.board[i][j] == PECA_BRANCA_DAMA:
-                    pygame.draw.circle(self.screen, (255, 0, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
+                    self.screen.blit(self.sprite_dama_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 elif self.board[i][j] == PECA_PRETA_DAMA:
-                    pygame.draw.circle(self.screen, (0, 0, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 40)
-                    pygame.draw.circle(self.screen, (255, 255, 255), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 30)
-
+                    self.screen.blit(self.sprite_dama_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
+                elif self.board[i][j] == PECA_BRANCA_DAMA_SELECIONADA:
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_dama_brancas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
+                elif self.board[i][j] == PECA_PRETA_DAMA_SELECIONADA:
+                    pygame.draw.rect(self.screen, (255, 0, 0),
+                                     (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA, TAMANHO_CASA, TAMANHO_CASA))
+                    self.screen.blit(self.sprite_dama_pretas, (x + j * TAMANHO_CASA, y + i * TAMANHO_CASA))
                 if self.board[i][j] == CASA_MOVIMENTO:
                     pygame.draw.circle(self.screen, (0, 255, 0), (x + j * TAMANHO_CASA + 50, y + i * TAMANHO_CASA + 50), 12)
                 cont += 1
