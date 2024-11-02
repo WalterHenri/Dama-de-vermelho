@@ -10,10 +10,11 @@ from DrawTools import *
 
 class Damas:
     def __init__(self, mode=TWO_PLAYER, nome_bot=""):
+        self.tabuleiroCarregado = False
         self.tempoInicial = None
         self.tempoTotal = timedelta(seconds=0)
         self.board = [[0 for _ in range(8)] for _ in range(8)]
-        self.inicializar_tabuleiro()
+        self.inicializarJogo()
         pygame.init()
         pygame.display.set_caption('Dama de Vermelho')
         self.background = pygame.image.load('Assets/background.jpg')
@@ -34,12 +35,13 @@ class Damas:
             self.bot.set_style(GameStyle.load_style(nome_bot + ".json"))
             self.bot.load_learning(nome_bot + "_data.txt")
 
-    def inicializar_tabuleiro(self):
+    def inicializarJogo(self):
         try:
-            with open('tabuleiroSalvo.txt', 'r') as f:
-                self.board = [[int(cell.strip()) for cell in line.split()]
-                              for line in f]
+            self.carregar_jogo()
         except FileNotFoundError:
+            self.inicializar_tabuleiro()
+    def inicializar_tabuleiro(self):
+        if self.tabuleiroCarregado == False:
             print("Iniciando um novo jogo")
             self.board[0][0] = PECA_PRETA
             self.board[0][2] = PECA_PRETA
@@ -77,12 +79,52 @@ class Damas:
                 print(self.board[i][j], end=' ')
             print()
 
-    def salvar_tabuleiro(self):
-        with open('tabuleiroSalvo.txt', 'w') as arquivo:
+    def salvar_jogo(self, turno, tempocorrido, tabuleiro, nome_arquivo="jogo_salvo.txt"):
+        with open(nome_arquivo, "w") as arquivo:
+            # Salvando turno
+            arquivo.write("#turno\n")
+            arquivo.write(f"{turno}\n\n")
+
+            # Salvando tempo corrido
+            arquivo.write("#tempocorrido\n")
+            arquivo.write(f"{tempocorrido}\n\n")
+
+            # Salvando tabuleiro
+            arquivo.write("#tabuleiro\n")
             for i in range(8):
                 for j in range(8):
                     arquivo.write(str(self.board[i][j]) + ' ')
                 arquivo.write('\n')
+
+    def carregar_jogo(self, nome_arquivo="jogo_salvo.txt"):
+        with open(nome_arquivo, "r") as arquivo:
+            linhas = arquivo.readlines()
+
+        turnoP = None
+        tempoCorridoSalvo = None
+
+        # Processar linhas do arquivo
+        i = 0
+        while i < len(linhas):
+            linha = linhas[i].strip()
+
+            if linha == "#turno":
+                i += 1
+                turnoP = int(linhas[i].strip())
+
+            elif linha == "#tempocorrido":
+                i += 1
+                tempoCorridoSalvo = int(linhas[i].strip())
+
+            elif linha == "#tabuleiro":
+                i += 1
+                self.board = [[int(cell.strip()) for cell in line.split()]
+                              for line in arquivo]
+
+            i += 1
+        self.turno = turnoP
+        self.tempocorrido = tempoCorridoSalvo
+        self.tabuleiroCarregado = True
 
     def desenhar_tabuleiro(self):
         x = SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA
@@ -169,7 +211,7 @@ class Damas:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if voltarButton.collidepoint(event.pos):
-                        self.salvar_tabuleiro()
+                        self.salvar_jogo(self.turno, self.tempoTotal, self.board, 'tabuleiroSalvo.txt')
                         running = False
                     elif empateButton.collidepoint(event.pos):
                         pass
