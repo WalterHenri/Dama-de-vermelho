@@ -1,5 +1,4 @@
 import json
-import numpy as np
 
 NEGATIVE_INFINITY = -1000000
 POSITIVE_INFINITY = 1000000

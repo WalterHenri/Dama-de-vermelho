@@ -16,9 +16,9 @@ class MenuAdversarios:
         pygame.display.set_caption('Dama de Vermelho')
 
         self.adversarios = [
-            {"nome": "Alcides", "dificuldade": 5, "Descricao": "Gosta de andar de skate e tocar teclado, mas tenha "
-                                                               "cuidado, sua grande habilidade em aprendizado por "
-                                                               "reforco o tornara um adversario duro de enfrentar",
+            {"nome": "Alcides", "dificuldade": 5,
+             "Descricao": "Gosta de andar de skate e tocar teclado, mas tenha cuidado, sua grande habilidade em "
+                          "aprendizado por reforco o tornara um adversario duro de enfrentar",
              "pathFoto": 'Assets/alcides.jpg'},
             {"nome": "Raphael", "dificuldade": 3, "Descricao": "Amigavel e divertido, esse guitarriista provavelmente "
                                                                "vai dar um show no tabuleiro",
