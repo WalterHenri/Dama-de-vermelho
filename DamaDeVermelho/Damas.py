@@ -1,16 +1,24 @@
 import pygame
-
+import os
+from datetime import timedelta
 from Bot import Bot
 from Movimento import *
 from Constants import *
+from DrawTools import *
 
 
 class Damas:
     def __init__(self, mode=TWO_PLAYER):
+        self.tempoInicial = None
+        self.tempoTotal = timedelta(seconds=0)
         self.board = [[0 for _ in range(8)] for _ in range(8)]
         self.inicializar_tabuleiro()
         pygame.init()
         pygame.display.set_caption('Dama de Vermelho')
+        self.background = pygame.image.load('Assets/background.jpg')
+        self.dark_overlay = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.dark_overlay.fill((0, 0, 0))
+        self.dark_overlay.set_alpha(100)
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.selecionada = None
         self.movimentos = None
@@ -22,41 +30,55 @@ class Damas:
         self.bot = Bot()
 
     def inicializar_tabuleiro(self):
-        self.board[0][0] = PECA_PRETA
-        self.board[0][2] = PECA_PRETA
-        self.board[0][4] = PECA_PRETA
-        self.board[0][6] = PECA_PRETA
+        try:
+            with open('tabuleiroSalvo.txt', 'r') as f:
+                self.board = [[int(cell.strip()) for cell in line.split()]
+                              for line in f]
+        except FileNotFoundError:
+            print("Iniciando um novo jogo")
+            self.board[0][0] = PECA_PRETA
+            self.board[0][2] = PECA_PRETA
+            self.board[0][4] = PECA_PRETA
+            self.board[0][6] = PECA_PRETA
 
-        self.board[1][1] = PECA_PRETA
-        self.board[1][3] = PECA_PRETA
-        self.board[1][5] = PECA_PRETA
-        self.board[1][7] = PECA_PRETA
+            self.board[1][1] = PECA_PRETA
+            self.board[1][3] = PECA_PRETA
+            self.board[1][5] = PECA_PRETA
+            self.board[1][7] = PECA_PRETA
 
-        self.board[2][0] = PECA_PRETA
-        self.board[2][2] = PECA_PRETA
-        self.board[2][4] = PECA_PRETA
-        self.board[2][6] = PECA_PRETA
+            self.board[2][0] = PECA_PRETA
+            self.board[2][2] = PECA_PRETA
+            self.board[2][4] = PECA_PRETA
+            self.board[2][6] = PECA_PRETA
 
-        self.board[5][1] = PECA_BRANCA
-        self.board[5][3] = PECA_BRANCA
-        self.board[5][5] = PECA_BRANCA
-        self.board[5][7] = PECA_BRANCA
+            self.board[5][1] = PECA_BRANCA
+            self.board[5][3] = PECA_BRANCA
+            self.board[5][5] = PECA_BRANCA
+            self.board[5][7] = PECA_BRANCA
 
-        self.board[6][0] = PECA_BRANCA
-        self.board[6][2] = PECA_BRANCA
-        self.board[6][4] = PECA_BRANCA
-        self.board[6][6] = PECA_BRANCA
+            self.board[6][0] = PECA_BRANCA
+            self.board[6][2] = PECA_BRANCA
+            self.board[6][4] = PECA_BRANCA
+            self.board[6][6] = PECA_BRANCA
 
-        self.board[7][1] = PECA_BRANCA
-        self.board[7][3] = PECA_BRANCA
-        self.board[7][5] = PECA_BRANCA
-        self.board[7][7] = PECA_BRANCA
+            self.board[7][1] = PECA_BRANCA
+            self.board[7][3] = PECA_BRANCA
+            self.board[7][5] = PECA_BRANCA
+            self.board[7][7] = PECA_BRANCA
 
     def print_tabuleiro(self):
         for i in range(8):
             for j in range(8):
                 print(self.board[i][j], end=' ')
             print()
+
+    def salvar_tabuleiro(self):
+        with open('tabuleiroSalvo.txt', 'w') as arquivo:
+            for i in range(8):
+                for j in range(8):
+                    arquivo.write(str(self.board[i][j]) + ' ')
+                arquivo.write('\n')
+
 
     def desenhar_tabuleiro(self):
         x = SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA
@@ -131,6 +153,13 @@ class Damas:
     def load_bot_learning(self):
         self.bot.load_learning()
 
+    def deletar_arquivo_tabuleiro(self):
+        try:
+            os.remove('tabuleiroSalvo.txt')
+        except FileNotFoundError:
+            pass
+
+
     def run(self):
 
         clock = pygame.time.Clock()
@@ -141,20 +170,51 @@ class Damas:
                 if event.type == pygame.QUIT:
                     running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    x, y = pygame.mouse.get_pos()
-                    self.selecionar_peca(x, y)
+                    if voltarButton.collidepoint(event.pos):
+                        self.salvar_tabuleiro()
+                        running = False
+                    elif empateButton.collidepoint(event.pos):
+                        pass
+                    elif desistirButton.collidepoint(event.pos):
+                        self.deletar_arquivo_tabuleiro()
+                        running = False
+                    else:
+                        x, y = pygame.mouse.get_pos()
+                        self.selecionar_peca(x, y)
 
-            self.screen.fill((0, 0, 0))
+            self.screen.blit(self.background, (0, 0))
+            self.screen.blit(self.dark_overlay, (0, 0))
+
+            voltarButton = pygame.Rect(10, SCREEN_HEIGHT - 70, 160, 40)
+            desenharBotao(voltarButton, corVermelha, "Voltar", fonteMedia, corBranca, self.screen, 2, 160, 40)
+
+            empateButton = pygame.Rect(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 130, 160, 40)
+            desenharBotao(empateButton, corVermelha, "Pedir Empate", fonteMedia, corBranca, self.screen, 2, 160, 40)
+
+            desistirButton = pygame.Rect(SCREEN_WIDTH - 180, SCREEN_HEIGHT - 70, 160, 40)
+            desenharBotao(desistirButton, corVermelha, "Desistir", fonteMedia, corBranca, self.screen, 2, 160, 40)
 
             self.desenhar_tabuleiro()
+
+            tempoCorrente = pygame.time.get_ticks()
+            if self.tempoInicial is None:
+                self.tempoInicial = tempoCorrente
+            elapsed_time = tempoCorrente - self.tempoInicial
+            self.tempoTotal += timedelta(milliseconds=elapsed_time)
+
+            hours, remainder = divmod(self.tempoTotal.seconds, 3600)
+            minutes, seconds = divmod(remainder, 60)
+
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"{int(hours):02d}:{minutes:02d}:{seconds:02d}", True, (255, 255, 255))
+            self.screen.blit(text, (10, 10))
+
             if self.vencedor is not None:
                 font = pygame.font.Font(None, 74)
                 text = font.render(f'Vencedor: {self.vencedor}', True, (255, 255, 255))
                 self.screen.blit(text, (200, 300))
             pygame.display.flip()
             clock.tick(FPS)
-        pygame.quit()
-        quit()
 
     def selecionar_peca(self, x, y):
 
