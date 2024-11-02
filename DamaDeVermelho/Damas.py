@@ -1,13 +1,14 @@
 import pygame
 import os
 from datetime import timedelta
-from Bot import Bot
+from Aprendizado import Aprendizado
 from Config import Config
 from GameStyle import GameStyle
 from Movimento import *
 from Constants import *
 from DrawTools import *
 from ResultadoModal import ResultadoModal
+
 
 class Damas:
     def __init__(self, mode=TWO_PLAYER, nome_bot=""):
@@ -31,13 +32,13 @@ class Damas:
         self.jogador1 = 'Branco'
         self.jogador2 = 'Preto'
         self.mode = mode
-        self.bot = Bot()
+        self.bot = Aprendizado()
         self.config = Config.load_config()
 
         if self.mode == ONE_PLAYER:
-            self.bot.set_name(nome_bot)
-            self.bot.set_style(GameStyle.load_style(nome_bot + ".json"))
-            self.bot.load_learning(nome_bot + "_data.txt")
+            self.bot.set_nome(nome_bot)
+            self.bot.set_estilo(GameStyle.load_style(nome_bot + ".json"))
+            self.bot.carregar_aprendizado(nome_bot + "_data.txt")
             sprite = pygame.image.load('Assets/Pecas/' + nome_bot + '.png')
         else:
             # pega o ultimo caractere da string
@@ -206,13 +207,13 @@ class Damas:
     def bot_move(self):
         state = self.board_to_state()
         actions = self.get_all_possible_moves_for_bot()
-        action = self.bot.choose_action(state, actions)
+        action = self.bot.acao(state, actions)
         self.apply_move(action)
 
         next_state = self.board_to_state()
         reward = self.calculate_reward(state, next_state)
         next_actions = self.get_all_possible_moves_for_bot()
-        self.bot.update_q_value(state, action, reward, next_state, next_actions)
+        self.bot.atualizar_valor_q(state, action, reward, next_state, next_actions)
 
     @staticmethod
     def deletar_arquivo_tabuleiro():
@@ -428,25 +429,25 @@ class Damas:
         reward = 0
 
         if self.vencedor == self.jogador2:
-            return self.bot.style.ganhar
+            return self.bot.estilo.ganhar
         elif self.vencedor == self.jogador1:
-            return self.bot.style.perder
+            return self.bot.estilo.perder
 
         if state.count(PECA_BRANCA) + state.count(PECA_BRANCA_DAMA) > next_state.count(PECA_BRANCA) + next_state.count(PECA_BRANCA_DAMA):
-            reward += self.bot.style.comer
+            reward += self.bot.estilo.comer
         elif state.count(PECA_PRETA) + state.count(PECA_PRETA_DAMA) < next_state.count(PECA_PRETA) + next_state.count(PECA_PRETA_DAMA):
-            reward += self.bot.style.perder_peca
+            reward += self.bot.estilo.perder_peca
 
         if state.count(PECA_BRANCA_DAMA) < next_state.count(PECA_BRANCA_DAMA):
-            reward += self.bot.style.inimigo_fazer_dama
+            reward += self.bot.estilo.inimigo_fazer_dama
         elif state.count(PECA_PRETA_DAMA) < next_state.count(PECA_PRETA_DAMA):
-            reward += self.bot.style.virar_dama
+            reward += self.bot.estilo.virar_dama
 
         if state.count(PECA_BRANCA_DAMA) > next_state.count(PECA_BRANCA_DAMA):
-            reward += self.bot.style.tomar_dama
+            reward += self.bot.estilo.tomar_dama
 
         if state.count(PECA_PRETA_DAMA) > next_state.count(PECA_PRETA_DAMA):
-            reward += self.bot.style.perder_dama
+            reward += self.bot.estilo.perder_dama
 
         return reward
 
