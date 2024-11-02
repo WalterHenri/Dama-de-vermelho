@@ -2,13 +2,14 @@ import pygame
 import os
 from datetime import timedelta
 from Bot import Bot
+from GameStyle import GameStyle
 from Movimento import *
 from Constants import *
 from DrawTools import *
 
 
 class Damas:
-    def __init__(self, mode=TWO_PLAYER):
+    def __init__(self, mode=TWO_PLAYER, nome_bot=""):
         self.tempoInicial = None
         self.tempoTotal = timedelta(seconds=0)
         self.board = [[0 for _ in range(8)] for _ in range(8)]
@@ -28,6 +29,10 @@ class Damas:
         self.jogador2 = 'Preto'
         self.mode = mode
         self.bot = Bot()
+        if self.mode == ONE_PLAYER:
+            self.bot.set_name(nome_bot)
+            self.bot.set_style(GameStyle.load_style(nome_bot + ".json"))
+            self.bot.load_learning(nome_bot + "_data.txt")
 
     def inicializar_tabuleiro(self):
         try:
@@ -79,7 +84,6 @@ class Damas:
                     arquivo.write(str(self.board[i][j]) + ' ')
                 arquivo.write('\n')
 
-
     def desenhar_tabuleiro(self):
         x = SCREEN_WIDTH // 2 - 4 * TAMANHO_CASA
         y = SCREEN_HEIGHT // 2 - 4 * TAMANHO_CASA
@@ -125,47 +129,41 @@ class Damas:
 
         for i in range(8):
             for j in range(8):
-                if self.board[i][j] in [PECA_PRETA, PECA_PRETA_DAMA]:  # Considera somente peças do bot
+                if self.board[i][j] in [PECA_PRETA, PECA_PRETA_DAMA]:
                     moves = Movimento.calcular_movimentos_possiveis(self.board, self.board[i][j])
-
-                    for move in moves:
-                        # Verifica se o movimento inicia na posição atual
-                        if move.i == i and move.j == j:
-                            possible_moves.append(move)
-
+                    if moves is not None:
+                        for move in moves:
+                            if move.i == i and move.j == j:
+                                possible_moves.append(move)
         return possible_moves
 
     def bot_move(self):
         state = self.board_to_state()
         actions = self.get_all_possible_moves_for_bot()
         action = self.bot.choose_action(state, actions)
-        self.apply_move(action)  # Update board based on the chosen action
+        self.apply_move(action)
 
-        # After move, get new state and calculate reward
         next_state = self.board_to_state()
-        reward = self.calculate_reward()  # Define a reward function based on win, loss, or piece capture
+        reward = self.calculate_reward(state, next_state)
         next_actions = self.get_all_possible_moves_for_bot()
         self.bot.update_q_value(state, action, reward, next_state, next_actions)
 
-    def save_bot_learning(self):
-        self.bot.save_learning()
-
-    def load_bot_learning(self):
-        self.bot.load_learning()
-
-    def deletar_arquivo_tabuleiro(self):
+    @staticmethod
+    def deletar_arquivo_tabuleiro():
         try:
             os.remove('tabuleiroSalvo.txt')
         except FileNotFoundError:
             pass
 
-
     def run(self):
-
         clock = pygame.time.Clock()
         running = True
 
         while running:
+
+            if self.vencedor is None and self.turno % 2 == 1 and self.mode == ONE_PLAYER:
+                self.bot_move()
+                self.turno += 1
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
@@ -340,7 +338,51 @@ class Damas:
         return cont
 
     def apply_move(self, action):
-        pass
+        self.board[action.i_final][action.j_final] = self.board[action.i][action.j]
+        self.board[action.i][action.j] = CASA_VAZIA
 
-    def calculate_reward(self):
-        pass
+        if action.tipo_movimento == MOVIMENTO_COMER:
+            self.board[action.peca_comida_i][action.peca_comida_j] = CASA_VAZIA
+
+        if self.board[action.i_final][action.j_final] == PECA_PRETA and action.i_final == 7:
+            self.board[action.i_final][action.j_final] = PECA_PRETA_DAMA
+        elif self.board[action.i_final][action.j_final] == PECA_BRANCA and action.i_final == 0:
+            self.board[action.i_final][action.j_final] = PECA_BRANCA_DAMA
+
+    def calculate_reward(self, state, next_state):
+        reward = 0
+
+        if self.vencedor == self.jogador2:
+            return self.bot.style.ganhar
+        elif self.vencedor == self.jogador1:
+            return self.bot.style.perder
+
+        if state.count(PECA_BRANCA) + state.count(PECA_BRANCA_DAMA) > next_state.count(PECA_BRANCA) + next_state.count(PECA_BRANCA_DAMA):
+            reward += self.bot.style.comer
+        elif state.count(PECA_PRETA) + state.count(PECA_PRETA_DAMA) < next_state.count(PECA_PRETA) + next_state.count(PECA_PRETA_DAMA):
+            reward += self.bot.style.perder_peca
+
+        if state.count(PECA_BRANCA_DAMA) < next_state.count(PECA_BRANCA_DAMA):
+            reward += self.bot.style.inimigo_fazer_dama
+        elif state.count(PECA_PRETA_DAMA) < next_state.count(PECA_PRETA_DAMA):
+            reward += self.bot.style.virar_dama
+
+        if state.count(PECA_BRANCA_DAMA) > next_state.count(PECA_BRANCA_DAMA):
+            reward += self.bot.style.tomar_dama
+
+        if state.count(PECA_PRETA_DAMA) > next_state.count(PECA_PRETA_DAMA):
+            reward += self.bot.style.perder_dama
+
+        return reward
+
+
+
+
+
+
+
+
+
+
+
+

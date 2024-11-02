@@ -8,6 +8,14 @@ class Bot:
         self.alpha = alpha
         self.gamma = gamma
         self.epsilon = epsilon
+        self.name = 'Bot'
+        self.style = None
+
+    def set_name(self, name):
+        self.name = name
+
+    def set_style(self, style):
+        self.style = style
 
     def get_q_value(self, state, action):
         return self.q_table.get((state, action), 0.0)
@@ -27,16 +35,21 @@ class Bot:
         best_future = max(future_rewards)
         new_value = (1 - self.alpha) * old_value + self.alpha * (reward + self.gamma * best_future)
         self.q_table[(state, action)] = new_value
+        self.save_learning(self.name + '_data.txt')
 
-    def save_learning(self, filename='qlearning_data.json'):
+    def save_learning(self, filename='qlearning_data.txt'):
         with open(filename, 'w') as f:
-            json.dump(self.q_table, f)
+            for key, value in self.q_table.items():
+                state, action = key
+                f.write(f'{state},{action},{value}\n')
 
-    def load_learning(self, filename='qlearning_data.json'):
+    def load_learning(self, filename='qlearning_data.txt'):
         try:
             with open(filename, 'r') as f:
-                self.q_table = json.load(f)
+                for line in f:
+                    state, action, value = line.split(',')
+                    self.q_table[(state, action)] = float(value)
         except FileNotFoundError:
-            self.q_table = {}
+            pass
 
 
