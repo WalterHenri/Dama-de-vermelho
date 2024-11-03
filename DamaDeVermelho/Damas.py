@@ -436,6 +436,18 @@ class Damas:
         elif self.board[action.i_final][action.j_final] == PECA_BRANCA and action.i_final == 0:
             self.board[action.i_final][action.j_final] = PECA_BRANCA_DAMA
 
+        cont_branca = self.num_pecas(PECA_BRANCA)
+        if cont_branca == 0 or len(self.get_all_possible_moves(PECA_BRANCA)) == 0:
+            resultadoModal = ResultadoModal(self.screen, False)
+            resposta = resultadoModal.run()
+            if resposta == "menu":
+                self.running = False
+                self.music.stop()
+                return
+            elif resposta == "rematch":
+                self.rematch()
+                return
+
     def calculate_reward(self, state, next_state):
         reward = 0
 
