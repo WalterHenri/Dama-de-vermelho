@@ -23,13 +23,13 @@ class Aprendizado:
         return self.tabela_q.get((estado, acao), 0.0)
 
     def acao(self, estado, acoes):
-        if not acoes:
+        if len(acoes) == 0:
             return None
         if random.uniform(0, 1) < self.epsilon:
             return random.choice(acoes)
         else:
-            mehores_acoes = self.melhores_jogadas(acoes, estado)
-            return random.choice(mehores_acoes)
+            melhores_acoes = self.melhores_jogadas(acoes, estado)
+            return random.choice(melhores_acoes)
 
     def melhores_jogadas(self, acoes, estado):
         valores_q = []
@@ -45,6 +45,8 @@ class Aprendizado:
     def atualizar_valor_q(self, estado, acao, recompensa, proximo_estado, proximas_acoes):
         valor_antigo = self.get_valor_q(estado, acao.to_string())
         recompensas_futuras = []
+        if len(proximas_acoes) == 0:
+            return
         if proximas_acoes:
             for a in proximas_acoes:
                 recompensas_futuras.append(self.get_valor_q(proximo_estado, a.to_string()))

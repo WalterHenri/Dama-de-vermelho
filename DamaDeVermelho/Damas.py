@@ -1,4 +1,3 @@
-import pygame
 import os
 from datetime import timedelta
 from Aprendizado import Aprendizado
@@ -34,15 +33,24 @@ class Damas:
         self.mode = mode
         self.bot = Aprendizado()
         self.config = Config.load_config()
+        self.mixer = pygame.mixer
+        self.mixer.init()
+        self.music = None
 
         if self.mode == ONE_PLAYER:
             self.bot.set_nome(nome_bot)
             self.bot.set_estilo(GameStyle.load_style(nome_bot + ".json"))
             self.bot.carregar_aprendizado(nome_bot + "_data.txt")
             sprite = pygame.image.load('Assets/Pecas/' + nome_bot + '.png')
+            self.music = self.mixer.Sound('Audio/' + nome_bot + '.mp3')
+            self.music.set_volume(self.config.volume)
+            self.music.play(-1)
         else:
             skin = int(self.config.skin[-1]) % 8 + 1
             sprite = pygame.image.load('Assets/Pecas/Player' + str(skin) + '.png')
+            self.music = self.mixer.Sound('Audio/backmusic.mp3')
+            self.music.set_volume(self.config.volume)
+            self.music.play(-1)
 
         sprite = pygame.transform.scale(sprite, (TAMANHO_CASA * 2, TAMANHO_CASA))
         self.sprite_pretas = sprite.subsurface((0, 0, TAMANHO_CASA, TAMANHO_CASA))
@@ -190,12 +198,12 @@ class Damas:
     def board_to_state(self):
         return tuple(tuple(row) for row in self.board)
 
-    def get_all_possible_moves_for_bot(self):
+    def get_all_possible_moves(self, cor):
         possible_moves = []
 
         for i in range(8):
             for j in range(8):
-                if self.board[i][j] in [PECA_PRETA, PECA_PRETA_DAMA]:
+                if color(self.board[i][j]) == cor:
                     moves = Movimento.calcular_movimentos_possiveis(self.board, self.board[i][j])
                     if moves is not None:
                         for move in moves:
@@ -205,13 +213,13 @@ class Damas:
 
     def bot_move(self):
         state = self.board_to_state()
-        actions = self.get_all_possible_moves_for_bot()
+        actions = self.get_all_possible_moves(PECA_PRETA)
         action = self.bot.acao(state, actions)
         self.apply_move(action)
 
         next_state = self.board_to_state()
         reward = self.calculate_reward(state, next_state)
-        next_actions = self.get_all_possible_moves_for_bot()
+        next_actions = self.get_all_possible_moves(PECA_BRANCA)
         self.bot.atualizar_valor_q(state, action, reward, next_state, next_actions)
 
     @staticmethod
@@ -231,15 +239,17 @@ class Damas:
                 self.turno += 1
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
-                    running = False
+                    self.running = False
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     if voltarButton.collidepoint(event.pos):
                         self.salvar_jogo(self.turno, self.tempoTotal, self.board, 'tabuleiroSalvo.txt')
-                        running = False
+                        self.music.stop()
+                        self.running = False
                     elif empateButton.collidepoint(event.pos):
                         pass
                     elif desistirButton.collidepoint(event.pos):
                         self.deletar_arquivo_tabuleiro()
+                        self.music.stop()
                         self.running = False
                     else:
                         x, y = pygame.mouse.get_pos()
@@ -304,22 +314,24 @@ class Damas:
             self.mover_peca(i, j)
             self.turno += 1
             cont_branca = self.num_pecas(PECA_BRANCA)
-            if cont_branca == 0:
+            if cont_branca == 0 or len(self.get_all_possible_moves(PECA_BRANCA)) == 0:
                 resultadoModal = ResultadoModal(self.screen, False)
                 resposta = resultadoModal.run()
                 if resposta == "menu":
                     self.running = False
+                    self.music.stop()
                     return
                 elif resposta == "rematch":
                     self.rematch()
                     return
 
             cont_preta = self.num_pecas(PECA_PRETA)
-            if cont_preta == 0:
+            if cont_preta == 0 or len(self.get_all_possible_moves(PECA_PRETA)) == 0:
                 resultadoModal = ResultadoModal(self.screen, True)
                 resposta = resultadoModal.run()
                 if resposta == "menu":
                     self.running = False
+                    self.music.stop()
                     return
                 elif resposta == "rematch":
                     self.rematch()
